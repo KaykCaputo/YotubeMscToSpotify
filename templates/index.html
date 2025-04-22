@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Youtube Music to Spotify</title>
+    <link rel="stylesheet" href="/static/style.css" />
+  </head>
+  <body>
+    <div class="container">
+      <h1>Youtube Music to Spotify</h1>
+      <form action="/search_song/" method="post">
+        <input
+          type="text"
+          name="youtube_url"
+          class="input-field"
+          placeholder="Youtube Music link"
+          required
+        />
+        <button type="submit" class="btn">Search</button>
+      </form>
+
+      {% if error %}
+      <p class="error">{{ error }}</p>
+      {% endif %} {% if music %}
+      <div class="result">
+        <img src="{{ music.image }}" alt="Capa" class="album-art" />
+        <h2>{{ music.name }}</h2>
+        <p>{{ music.artist }}</p>
+        <div class="actions">
+          <a href="{{ music.spotify_url }}" target="_blank" class="btn"
+            >Show on Spotify</a
+          >
+          <button
+            class="btn"
+            onclick="copyToClipboard('{{ music.spotify_url }}')"
+          >
+            Copy link
+          </button>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+
+    <script>
+      function copyToClipboard(text) {
+        navigator.clipboard.writeText(text).then(function () {
+          alert("Link copiado para a área de transferência!");
+        });
+      }
+    </script>
+    <footer
+      style="
+        text-align: center;
+        padding: 20px;
+        background-color: #f1f1f1;
+        margin-top: 50px;
+      "
+    >
+      <p>
+        Made by
+        <a
+          href="https://github.com/KaykCaputo"
+          target="_blank"
+          style="color: #333"
+          >Kayk Caputo</a
+        >
+      </p>
+    </footer>
+  </body>
+</html>
