@@ -104,6 +104,7 @@ def get_youtube_title(youtube_url: str, api_key) -> str:
             for phrase in unwanted_phrases:
                 title = title.replace(phrase, "")
             
+            print (title.strip())
             return title.strip()
         else:
             return "Not found"
