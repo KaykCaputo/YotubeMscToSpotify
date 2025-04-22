@@ -1,16 +1,14 @@
 import os
-import json
 import base64
+import re
 import time
 from urllib.parse import parse_qs, urlencode, urlparse, urlunparse
-from dotenv import load_dotenv
 from requests import post, get #type: ignore
-import yt_dlp # type:ignore
 
 
 client_id = os.getenv("CLIENT_ID") 
 client_secret = os.getenv("CLIENT_SECRET") 
-
+api_key = os.getenv("API_KEY")
 
 def get_token():
     for attempt in range(3):
@@ -63,7 +61,7 @@ def search_for_artist(token, artist_name):
 def search_track(token: str, youtube_url: str):
     youtube_url = convert_youtube_music_link(youtube_url)
     
-    song_name = get_youtube_title(youtube_url)
+    song_name = get_youtube_title(youtube_url, get_api_key())
     
     url = f"https://api.spotify.com/v1/search?q={song_name}&type=track&limit=1"
     headers = {
@@ -85,27 +83,34 @@ def search_track(token: str, youtube_url: str):
         return {"error": "Not found"}
 
 
-def get_youtube_title(youtube_url: str) -> str:
-    ydl_opts = {
-        'quiet': True,
-        'force_generic_extractor': True,
-        'extract_flat': True,  
-        'cookiefile': 'cookies.txt',
-    }
-    youtube_url = convert_youtube_music_link(youtube_url)
+def get_youtube_title(youtube_url: str, api_key) -> str:
     print(youtube_url)
-    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-        info = ydl.extract_info(youtube_url, download=False)
-        title = info.get('title', None)
-        title = title.lower()
-        unwanted_phrases = [
+    youtube_url = convert_youtube_music_link(youtube_url)
+    video_id = get_video_id(youtube_url)
+    print(video_id)
+    url = f"https://www.googleapis.com/youtube/v3/videos?id={video_id}&part=snippet&key={api_key}"
+    print(url)
+    response = get(url)
+    if response.status_code == 200:
+        data = response.json()
+
+        if 'items' in data and len(data['items']) > 0:
+            title = data['items'][0]['snippet']['title']
+            unwanted_phrases = [
                 "official video", "remix", "audio", "hd", "music video", "official",
-                "-", "(", ")", "1080p", "performance", "in concert", "full", "version"
+                "-", "(", ")", "1080p", "performance", "in concert", "full", "version",
+                "lyrics"
             ]
-        for phrase in unwanted_phrases:
-            title = title.replace(phrase, "")
+            for phrase in unwanted_phrases:
+                title = title.replace(phrase, "")
+            
+            return title.strip()
+        else:
+            return "Not found"
+
         
-        return title.strip()
+    else:
+        return f"Error: {response.status_code}"
 
 def convert_youtube_music_link(link: str) -> str:
     parsed = urlparse(link)
@@ -129,3 +134,11 @@ def convert_youtube_music_link(link: str) -> str:
 
     return link
 
+def get_video_id(youtube_url: str) -> str:
+    match = re.search(r"(?:v=|\/)([0-9A-Za-z_-]{11})(?:[&?]|$)", youtube_url)
+    if match:
+        return match.group(1)
+    return None # type: ignore
+
+def get_api_key():
+    return api_key
