@@ -82,7 +82,21 @@ def search_track(token: str, youtube_url: str):
             "image": item["album"]["images"][0]["url"] if item["album"]["images"] else None
         }
     else:
-        return {"error": "Not found"}
+        print("Artista não encontrado, buscando apenas pelo nome da música...")
+        url = f"https://api.spotify.com/v1/search?q=track:{song_name}&type=track&limit=1"
+        response = get(url, headers=headers)
+        data = response.json()
+
+        if data["tracks"]["items"]:
+            item = data["tracks"]["items"][0]
+            return {
+                "name": item["name"],
+                "artist": item["artists"][0]["name"],
+                "spotify_url": item["external_urls"]["spotify"],
+                "image": item["album"]["images"][0]["url"] if item["album"]["images"] else None
+            }
+        else:
+            return {"error": "Not found"}
 
 
 def get_youtube_title_and_artist(youtube_url: str, api_key) -> dict:
@@ -108,14 +122,9 @@ def get_youtube_title_and_artist(youtube_url: str, api_key) -> dict:
             ]
             for phrase in unwanted_phrases:
                 title = title.replace(phrase, "")
-            title_parts = title.split('-')
-            if len(title_parts) > 1:
-                artist_name = title_parts[0].strip()
-                song_name = title_parts[1].strip()
-            else:     
-                artist_name = channel_title.strip()  
-                song_name = title
-
+            artist_name = channel_title.strip()  
+            song_name = title  
+                
             return {
                 "song_name": song_name,
                 "artist_name": artist_name
