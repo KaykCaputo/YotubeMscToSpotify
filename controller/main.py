@@ -90,6 +90,7 @@ def get_youtube_title(youtube_url: str) -> str:
         'quiet': True,
         'force_generic_extractor': True,
         'extract_flat': True,  
+        'cookiefile': 'cookies.txt',
     }
     youtube_url = convert_youtube_music_link(youtube_url)
     print(youtube_url)
