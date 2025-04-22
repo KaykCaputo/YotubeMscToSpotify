@@ -8,9 +8,6 @@ from requests import post, get #type: ignore
 import yt_dlp # type:ignore
 
 
-load_dotenv()
-
-
 client_id = os.getenv("CLIENT_ID") 
 client_secret = os.getenv("CLIENT_SECRET") 
 
