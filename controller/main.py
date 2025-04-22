@@ -34,8 +34,8 @@ def get_token():
             return token
         except Exception as e:
             print("Error parsing JSON:", e)
-            if attempt < 2:  # Se falhar, tenta novamente
-                time.sleep(2)  # Espera 2 segundos antes de tentar de novo
+            if attempt < 2:  
+                time.sleep(2) 
             else:
                 return None
 
@@ -61,9 +61,11 @@ def search_for_artist(token, artist_name):
 def search_track(token: str, youtube_url: str):
     youtube_url = convert_youtube_music_link(youtube_url)
     
-    song_name = get_youtube_title(youtube_url, get_api_key())
+    title_and_artist = get_youtube_title_and_artist(youtube_url, get_api_key())
+    song_name = title_and_artist.get("song_name")
+    artist_name = title_and_artist.get("artist_name")
     
-    url = f"https://api.spotify.com/v1/search?q={song_name}&type=track&limit=1"
+    url = f"https://api.spotify.com/v1/search?q=track:{song_name} artist:{artist_name}&type=track&limit=1"
     headers = {
         "Authorization": f"Bearer {token}"
     }
@@ -83,19 +85,22 @@ def search_track(token: str, youtube_url: str):
         return {"error": "Not found"}
 
 
-def get_youtube_title(youtube_url: str, api_key) -> str:
-    print(youtube_url)
+def get_youtube_title_and_artist(youtube_url: str, api_key) -> dict:
+    print(f"URL do YouTube: {youtube_url}")
     youtube_url = convert_youtube_music_link(youtube_url)
     video_id = get_video_id(youtube_url)
-    print(video_id)
+    print(f"ID do vídeo: {video_id}")
+    
     url = f"https://www.googleapis.com/youtube/v3/videos?id={video_id}&part=snippet&key={api_key}"
-    print(url)
+    print(f"URL da requisição: {url}")
+    
     response = get(url)
     if response.status_code == 200:
         data = response.json()
-
         if 'items' in data and len(data['items']) > 0:
             title = data['items'][0]['snippet']['title']
+            channel_title = data['items'][0]['snippet']['channelTitle'] 
+            
             unwanted_phrases = [
                 "official video", "remix", "audio", "hd", "music video", "official",
                 "-", "(", ")", "1080p", "performance", "in concert", "full", "version",
@@ -103,15 +108,22 @@ def get_youtube_title(youtube_url: str, api_key) -> str:
             ]
             for phrase in unwanted_phrases:
                 title = title.replace(phrase, "")
-            
-            print (title.strip())
-            return title.strip()
-        else:
-            return "Not found"
+            title_parts = title.split('-')
+            if len(title_parts) > 1:
+                artist_name = title_parts[0].strip()
+                song_name = title_parts[1].strip()
+            else:     
+                artist_name = channel_title.strip()  
+                song_name = title
 
-        
+            return {
+                "song_name": song_name,
+                "artist_name": artist_name
+            }
+        else:
+            return {"error": "No video found"}
     else:
-        return f"Error: {response.status_code}"
+        return {"error": f"API Error: {response.status_code}"}
 
 def convert_youtube_music_link(link: str) -> str:
     parsed = urlparse(link)
