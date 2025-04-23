@@ -36,16 +36,15 @@ footer {
 
 
 .container {
-    background-color: #fff;
     padding: 30px;
+    padding-inline: 20px;
     border-radius: 8px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     text-align: center;
     width: 100%;
     max-width: 400px;
-    margin: 0 10px;
+    margin: 0 auto;
 }
-
 h1 {
     font-size: 24px;
     margin-bottom: 20px;
@@ -123,11 +122,11 @@ p {
 }
 
 @media (max-width: 768px) {
-
     .container {
         padding: 20px;
+        margin: 0 15px; 
     }
-    
+
     h1 {
         font-size: 20px;
     }
@@ -148,6 +147,7 @@ p {
 @media (max-width: 480px) {
     .container {
         padding: 15px;
+        margin: 0 10px; 
     }
 
     h1 {
