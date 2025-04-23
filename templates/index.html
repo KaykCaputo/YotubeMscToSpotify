@@ -5,6 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Youtube Music to Spotify</title>
     <link rel="stylesheet" href="/static/style.css" />
+    <script
+      async
+      src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5911779233936060"
+      crossorigin="anonymous"
+    ></script>
   </head>
   <body>
     <div class="container">
@@ -42,6 +47,24 @@
       {% endif %}
     </div>
 
+    <div class="sidebar">
+      <div class="ad">
+        <script
+          async
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"
+        ></script>
+        <ins
+          class="adsbygoogle"
+          style="display: block"
+          data-ad-client="{{ google_ad_client }}"
+          data-ad-slot="{{ data_ad_slot }}"
+        ></ins>
+        <script>
+          (adsbygoogle = window.adsbygoogle || []).push({});
+        </script>
+      </div>
+    </div>
+
     <script>
       function copyToClipboard(text) {
         navigator.clipboard.writeText(text).then(function () {
@@ -49,6 +72,7 @@
         });
       }
     </script>
+
     <footer
       style="
         text-align: center;
@@ -67,5 +91,10 @@
         >
       </p>
     </footer>
+    <script
+      async
+      src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5911779233936060"
+      crossorigin="anonymous"
+    ></script>
   </body>
 </html>
