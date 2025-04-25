@@ -164,9 +164,12 @@ def reinsert_spaces(original: str, compacted: str) -> str:
 
 # Convert YouTube Music URL to standard YouTube URL if needed
 def convert_youtube_music_link(link: str) -> str | dict:
-    if not ("music.youtube.com" in link or "youtube.com" in link):
+    if not ("music.youtube.com" in link or "youtube.com" in link or "youtu.be" in link):
         return {"error": "Invalid URL"}
+    
     parsed = urlparse(link)
+    
+    # Check for YouTube Music URL and convert to standard YouTube URL
     if "music.youtube.com" in parsed.netloc:
         query_params = parse_qs(parsed.query)
         v = query_params.get("v")
@@ -179,13 +182,27 @@ def convert_youtube_music_link(link: str) -> str | dict:
             query=new_query
         )
         return urlunparse(parsed)
+    
+    # Check if the link is in the youtu.be format and convert to standard YouTube URL
+    if "youtu.be" in parsed.netloc:
+        video_id = parsed.path.strip('/')
+        return f"https://www.youtube.com/watch?v={video_id}"
+    
     return link
 
-# Extract video ID from YouTube URL
+
+# Extract video ID from YouTube URL (supports youtube.com, youtube music, and youtu.be)
 def get_video_id(youtube_url: str) -> str:
+    # Match regular youtube and youtube music URLs
     match = re.search(r"(?:v=|\/)([0-9A-Za-z_-]{11})(?:[&?]|$)", youtube_url)
     if match:
         return match.group(1)
+    
+    # Match youtu.be short URLs
+    match_youtu_be = re.search(r"youtu.be\/([0-9A-Za-z_-]{11})", youtube_url)
+    if match_youtu_be:
+        return match_youtu_be.group(1)
+    
     return None  # type: ignore
 
 # Return API key (for flexibility/testability)
