@@ -174,6 +174,8 @@ def convert_youtube_music_link(link: str) -> str | dict:
         query_params = parse_qs(parsed.query)
         v = query_params.get("v")
         if not v:
+            if(query_params.get("list")):
+                return {"error": "Its a playlist"}
             return {"error": "Invalid YouTube Music link"}
         new_query = urlencode({"v": v[0]})
         parsed = parsed._replace(
