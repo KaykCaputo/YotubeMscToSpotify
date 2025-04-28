@@ -28,7 +28,28 @@
 
       {% if error %}
       <p class="error">{{ error }}</p>
-      {% endif %} {% if music %}
+      {% endif %} {% if music %} {% if music is iterable %}
+      <!-- Playlist Results -->
+      <h2>Playlist</h2>
+      {% for track in music %}
+      <div class="result">
+        <img src="{{ track.image }}" alt="Capa" class="album-art" />
+        <h3>{{ track.name }}</h3>
+        <p>{{ track.artist }}</p>
+        <div class="actions">
+          <a href="{{ track.spotify_url }}" target="_blank" class="btn"
+            >Show on Spotify</a
+          >
+          <button
+            class="btn"
+            onclick="copyToClipboard('{{ track.spotify_url }}')"
+          >
+            Copy link
+          </button>
+        </div>
+      </div>
+      {% endfor %} {% else %}
+      <!-- Single Track Result -->
       <div class="result">
         <img src="{{ music.image }}" alt="Capa" class="album-art" />
         <h2>{{ music.name }}</h2>
@@ -45,7 +66,7 @@
           </button>
         </div>
       </div>
-      {% endif %}
+      {% endif %} {% endif %}
     </div>
 
     <div class="sidebar">
