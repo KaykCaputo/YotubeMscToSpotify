@@ -2,81 +2,89 @@ import os
 import base64
 import re
 import time
+import logging
 from urllib.parse import parse_qs, quote_plus, urlencode, urlparse, urlunparse
 from requests import post, get  # type: ignore
 from unidecode import unidecode  # type: ignore
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S"
+)
 
 # Environment variables
 client_id = os.getenv("CLIENT_ID")
 client_secret = os.getenv("CLIENT_SECRET")
 api_key = os.getenv("API_KEY")
 
-# Get an access token from Spotify API using client credentials flow
 def get_token():
     for attempt in range(3):
-        auth_string = client_id + ":" + client_secret
-        auth_bytes = auth_string.encode("utf-8")
-        auth_base64 = str(base64.b64encode(auth_bytes), "utf-8")
-
-        url = "https://accounts.spotify.com/api/token"
-        headers = {
-            "Authorization": "Basic " + auth_base64,
-            "Content-Type": "application/x-www-form-urlencoded"
-        }
-        data = {"grant_type": "client_credentials"}
-
-        result = post(url, headers=headers, data=data)
-
         try:
+            auth_string = client_id + ":" + client_secret
+            auth_bytes = auth_string.encode("utf-8")
+            auth_base64 = str(base64.b64encode(auth_bytes), "utf-8")
+
+            url = "https://accounts.spotify.com/api/token"
+            headers = {
+                "Authorization": "Basic " + auth_base64,
+                "Content-Type": "application/x-www-form-urlencoded"
+            }
+            data = {"grant_type": "client_credentials"}
+
+            result = post(url, headers=headers, data=data)
+            result.raise_for_status()
             json_result = result.json()
             token = json_result["access_token"]
+            logging.info("Access token obtained successfully.")
             return token
         except Exception as e:
-            print("Error parsing JSON:", e)
+            logging.error(f"Error obtaining token (attempt {attempt + 1}): {e}")
             if attempt < 2:
-                time.sleep(2)  # Retry delay
-            else:
-                return None
+                time.sleep(2)
+    return None
 
-# Helper to generate authorization headers
 def get_auth_headers(token):
     return {"Authorization": "Bearer " + token}
 
-# Search for an artist using Spotify API and return basic metadata
 def search_for_artist(token, artist_name):
-    url = "https://api.spotify.com/v1/search"
-    headers = get_auth_headers(token=token)
-    query = f"?q={artist_name}&type=artist&limit=1"
+    try:
+        url = "https://api.spotify.com/v1/search"
+        headers = get_auth_headers(token=token)
+        query = f"?q={artist_name}&type=artist&limit=1"
+        query_url = url + query
 
-    query_url = url + query
-    result = get(url=query_url, headers=headers)
-    json_result = result.json()
-    artist = json_result["artists"]["items"][0]
-    return {
-        "id": artist["id"],
-        "name": artist["name"],
-        "spotify_url": artist["external_urls"]["spotify"],
-        "image": artist["images"][0]["url"]
-    }
+        result = get(query_url, headers=headers)
+        result.raise_for_status()
+        artist = result.json()["artists"]["items"][0]
 
-# Search track function
+        logging.info(f"Found artist: {artist['name']}")
+        return {
+            "id": artist["id"],
+            "name": artist["name"],
+            "spotify_url": artist["external_urls"]["spotify"],
+            "image": artist["images"][0]["url"]
+        }
+    except Exception as e:
+        logging.error(f"Error searching for artist: {e}")
+        return {"error": str(e)}
+
 def search_track(token: str, youtube_url: str):
-    youtube_url = convert_youtube_music_link(youtube_url)  # Normalize URL
+    youtube_url = convert_youtube_music_link(youtube_url)
     title_and_artist = get_youtube_title_and_artist(youtube_url, get_api_key())
     if isinstance(title_and_artist, dict) and "error" in title_and_artist:
         return title_and_artist
 
     song_name = title_and_artist.get("song_name")
     artist_name = title_and_artist.get("artist_name")
-    artist_name = search_for_artist(token, artist_name)["name"]  # Normalize artist name with Spotify
+    artist_name = search_for_artist(token, artist_name).get("name", artist_name)
 
     headers = {"Authorization": f"Bearer {token}"}
 
-    # Helper to build Spotify search URL
     def build_url(query: str):
         return f"https://api.spotify.com/v1/search?q={quote_plus(query)}&type=track&limit=1"
 
-    # Try different levels of search accuracy
     for query in [
         f'track:"{song_name}" artist:"{artist_name}"',
         f'track:"{song_name}"',
@@ -86,6 +94,7 @@ def search_track(token: str, youtube_url: str):
         data = response.json()
         if data["tracks"]["items"]:
             item = data["tracks"]["items"][0]
+            logging.info(f"Found track: {item['name']} by {item['artists'][0]['name']}")
             return {
                 "name": item["name"],
                 "artist": item["artists"][0]["name"],
@@ -93,9 +102,9 @@ def search_track(token: str, youtube_url: str):
                 "image": item["album"]["images"][0]["url"] if item["album"]["images"] else None
             }
 
+    logging.warning(f"Track not found for: {song_name} - {artist_name}")
     return {"error": "Not found :("}
 
-# Extract and clean song name and artist name from YouTube metadata
 def get_youtube_title_and_artist(youtube_url: str, api_key) -> dict:
     converted = convert_youtube_music_link(youtube_url)
     if isinstance(converted, dict) and "error" in converted:
@@ -118,34 +127,26 @@ def get_youtube_title_and_artist(youtube_url: str, api_key) -> dict:
     original_channel = items[0]["snippet"]["channelTitle"]
     original_channel = re.sub(r"\s?- Topic$", "", original_channel).replace("VEVO", "").strip()
 
-    channel = unidecode(items[0]["snippet"]["channelTitle"].lower())
-    channel = re.sub(r"\s?- topic$", "", channel).replace("vevo", "").strip()
+    channel = unidecode(original_channel.lower())
     song_name = unidecode(original)
 
-    # Remove artist/channel prefix from title
     song_name = re.sub(rf"(?i)^{re.escape(channel)}\s*[-–:]\s*", "", song_name)
-
-    # Remove content inside parentheses
     song_name = re.sub(r"\(.*?\)", "", song_name)
-
-    # Remove words that are repeated from channel
     for w in channel.split():
         song_name = re.sub(rf"(?i)\b{re.escape(w)}\b", "", song_name)
 
-    # Remove common noise words
     unwanted = ["official video", "remix", "audio", "hd", "music video", "official",
                 "1080p", "performance", "in concert", "full", "lyrics", "video", "clipe",
                 "oficial", "[", "]", "(", ")", "'", "|", ":", original_channel, channel, ","]
     for w in unwanted:
         song_name = re.sub(rf"(?i)\b{re.escape(w)}\b", "", song_name)
 
-    # Cleanup spacing and characters
     song_name = re.sub(r"[-_]", " ", song_name)
     song_name = re.sub(r"\s{2,}", " ", song_name).strip()
 
+    logging.info(f"Extracted song: '{song_name}' by '{original_channel}'")
     return {"artist_name": original_channel, "song_name": song_name}
 
-# Convert YouTube Music URL to standard YouTube URL if needed
 def convert_youtube_music_link(link: str) -> str | dict:
     if not ("music.youtube.com" in link or "youtube.com" in link or "youtu.be" in link):
         return {"error": "Invalid URL"}
@@ -171,7 +172,6 @@ def convert_youtube_music_link(link: str) -> str | dict:
 
     return link
 
-# Extract video ID from YouTube URL (supports youtube.com, youtube music, and youtu.be)
 def get_video_id(youtube_url: str) -> str:
     match = re.search(r"(?:v=|/)([0-9A-Za-z_-]{11})(?:[&?]|$)", youtube_url)
     if match:
@@ -183,7 +183,6 @@ def get_video_id(youtube_url: str) -> str:
 
     return None  # type: ignore
 
-# Extract playlist ID from YouTube URL (supports youtube.com, youtube music)
 def get_playlist_id(youtube_url: str) -> str:
     match = re.search(r"(?:list=|/)([0-9A-Za-z_-]{11})(?:[&?]|$)", youtube_url)
     if match:
@@ -191,7 +190,6 @@ def get_playlist_id(youtube_url: str) -> str:
 
     return None  # type: ignore
 
-# Fetch all videos from a YouTube playlist
 def get_playlist_items(playlist_id: str, api_key: str, max_results: int = 50) -> list:
     videos = []
     base_url = "https://www.googleapis.com/youtube/v3/playlistItems"
@@ -221,24 +219,25 @@ def get_playlist_items(playlist_id: str, api_key: str, max_results: int = 50) ->
             break
         params["pageToken"] = next_page_token
 
+    logging.info(f"Fetched {len(videos)} videos from playlist.")
     return videos
 
-# Detect whether URL is a playlist or video
 def is_playlist_or_video(url: str):
     parsed = urlparse(url)
     query_params = parse_qs(parsed.query)
     if parsed.path.startswith("/watch") and "v" in query_params:
+        logging.info("Detected YouTube video URL.")
         return "video"
     elif parsed.path.startswith("/playlist") and "list" in query_params:
+        logging.info("Detected YouTube playlist URL.")
         return "playlist"
     else:
+        logging.warning("Invalid YouTube URL.")
         return "invalid"
 
-# Get API Key
 def get_api_key():
     return api_key
 
-# Function to handle playlist URLs and convert to Spotify tracks
 def get_spotify_tracks_from_playlist(url: str, token: str) -> list:
     if is_playlist_or_video(url) == "playlist":
         playlist_id = get_playlist_id(url)
@@ -255,6 +254,7 @@ def get_spotify_tracks_from_playlist(url: str, token: str) -> list:
             track = search_track(token, youtube_url)
             if "error" not in track:
                 spotify_tracks.append(track)
+        logging.info(f"Successfully mapped {len(spotify_tracks)} tracks from YouTube to Spotify.")
         return spotify_tracks
     else:
         return {"error": "Provided URL is not a playlist."}
