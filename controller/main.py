@@ -224,23 +224,15 @@ def get_playlist_items(playlist_id: str, api_key: str, max_results: int = 50) ->
     return videos
 
 # Detect whether URL is a playlist or video
-def is_playlist_or_video(url: str) -> str:
+def is_playlist_or_video(url: str):
     parsed = urlparse(url)
-    query = parse_qs(parsed.query)
-
-    if "list" in query and "v" not in query:
-        return "playlist"
-
-    if "v" in query:
+    query_params = parse_qs(parsed.query)
+    if parsed.path.startswith("/watch") and "v" in query_params:
         return "video"
-
-    if "youtu.be" in parsed.netloc:
-        return "video"
-
-    if "playlist" in parsed.path:
+    elif parsed.path.startswith("/playlist") and "list" in query_params:
         return "playlist"
-
-    return "unknown"
+    else:
+        return "invalid"
 
 # Get API Key
 def get_api_key():
