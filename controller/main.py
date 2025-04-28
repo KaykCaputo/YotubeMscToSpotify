@@ -14,11 +14,12 @@ logging.basicConfig(
     datefmt="%Y-%m-%d %H:%M:%S"
 )
 
-# Environment variables
+# Load environment variables
 client_id = os.getenv("CLIENT_ID")
 client_secret = os.getenv("CLIENT_SECRET")
 api_key = os.getenv("API_KEY")
 
+# Function to obtain Spotify API access token
 def get_token():
     for attempt in range(3):
         try:
@@ -45,9 +46,11 @@ def get_token():
                 time.sleep(2)
     return None
 
+# Helper function to build authorization headers
 def get_auth_headers(token):
     return {"Authorization": "Bearer " + token}
 
+# Search for an artist on Spotify
 def search_for_artist(token, artist_name):
     try:
         url = "https://api.spotify.com/v1/search"
@@ -70,6 +73,7 @@ def search_for_artist(token, artist_name):
         logging.error(f"Error searching for artist: {e}")
         return {"error": str(e)}
 
+# Search for a track on Spotify based on a YouTube URL
 def search_track(token: str, youtube_url: str):
     youtube_url = convert_youtube_music_link(youtube_url)
     title_and_artist = get_youtube_title_and_artist(youtube_url, get_api_key())
@@ -85,6 +89,7 @@ def search_track(token: str, youtube_url: str):
     def build_url(query: str):
         return f"https://api.spotify.com/v1/search?q={quote_plus(query)}&type=track&limit=1"
 
+    # Try different search query formats to maximize match chances
     for query in [
         f'track:"{song_name}" artist:"{artist_name}"',
         f'track:"{song_name}"',
@@ -105,6 +110,7 @@ def search_track(token: str, youtube_url: str):
     logging.warning(f"Track not found for: {song_name} - {artist_name}")
     return {"error": "Not found :("}
 
+# Extract YouTube video title and artist using YouTube Data API
 def get_youtube_title_and_artist(youtube_url: str, api_key) -> dict:
     converted = convert_youtube_music_link(youtube_url)
     if isinstance(converted, dict) and "error" in converted:
@@ -123,6 +129,7 @@ def get_youtube_title_and_artist(youtube_url: str, api_key) -> dict:
     if not items:
         return {"error": "No video found"}
 
+    # Process the video title and channel name to extract song and artist
     original = items[0]["snippet"]["title"]
     original_channel = items[0]["snippet"]["channelTitle"]
     original_channel = re.sub(r"\s?- Topic$", "", original_channel).replace("VEVO", "").strip()
@@ -147,6 +154,7 @@ def get_youtube_title_and_artist(youtube_url: str, api_key) -> dict:
     logging.info(f"Extracted song: '{song_name}' by '{original_channel}'")
     return {"artist_name": original_channel, "song_name": song_name}
 
+# Normalize YouTube Music links to regular YouTube links
 def convert_youtube_music_link(link: str) -> str | dict:
     if not ("music.youtube.com" in link or "youtube.com" in link or "youtu.be" in link):
         return {"error": "Invalid URL"}
@@ -172,6 +180,7 @@ def convert_youtube_music_link(link: str) -> str | dict:
 
     return link
 
+# Extract video ID from YouTube URL
 def get_video_id(youtube_url: str) -> str:
     match = re.search(r"(?:v=|/)([0-9A-Za-z_-]{11})(?:[&?]|$)", youtube_url)
     if match:
@@ -183,13 +192,16 @@ def get_video_id(youtube_url: str) -> str:
 
     return None  # type: ignore
 
+# Extract playlist ID from YouTube URL
 def get_playlist_id(youtube_url: str) -> str:
-    match = re.search(r"(?:list=|/)([0-9A-Za-z_-]{11})(?:[&?]|$)", youtube_url)
-    if match:
-        return match.group(1)
-
+    parsed = urlparse(youtube_url)
+    query_params = parse_qs(parsed.query)
+    playlist_id = query_params.get("list")
+    if playlist_id:
+        return playlist_id[0]
     return None  # type: ignore
 
+# Get all videos from a YouTube playlist
 def get_playlist_items(playlist_id: str, api_key: str, max_results: int = 50) -> list:
     videos = []
     base_url = "https://www.googleapis.com/youtube/v3/playlistItems"
@@ -222,22 +234,34 @@ def get_playlist_items(playlist_id: str, api_key: str, max_results: int = 50) ->
     logging.info(f"Fetched {len(videos)} videos from playlist.")
     return videos
 
+# Identify whether a YouTube URL is a playlist or video
 def is_playlist_or_video(url: str):
     parsed = urlparse(url)
     query_params = parse_qs(parsed.query)
-    if parsed.path.startswith("/watch") and "v" in query_params:
-        logging.info("Detected YouTube video URL.")
-        return "video"
-    elif parsed.path.startswith("/playlist") and "list" in query_params:
-        logging.info("Detected YouTube playlist URL.")
-        return "playlist"
-    else:
-        logging.warning("Invalid YouTube URL.")
-        return "invalid"
 
+    if parsed.path.startswith("/watch"):
+        if "v" in query_params:
+            logging.info("Detected YouTube video URL.")
+            return "video"
+        elif "list" in query_params:
+            logging.info("Detected YouTube playlist URL (watch page).")
+            return "playlist"
+    elif parsed.path.startswith("/playlist"):
+        if "list" in query_params:
+            logging.info("Detected YouTube playlist URL.")
+            return "playlist"
+    elif parsed.netloc == "youtu.be":
+        logging.info("Detected YouTube short video URL (youtu.be).")
+        return "video"
+
+    logging.warning("Invalid YouTube URL.")
+    return "invalid"
+
+# Helper function to retrieve YouTube API key
 def get_api_key():
     return api_key
 
+# Map a YouTube playlist to Spotify tracks
 def get_spotify_tracks_from_playlist(url: str, token: str) -> list:
     if is_playlist_or_video(url) == "playlist":
         playlist_id = get_playlist_id(url)
