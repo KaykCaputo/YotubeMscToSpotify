@@ -48,7 +48,8 @@ async def search_song(request: Request, youtube_url: str = Form(...)):
         # If the playlist is found and processed
         return templates.TemplateResponse("index.html", {
             "request": request,
-            "music": result,  # Here you return the tracks from the playlist
+            "music": result,
+            "type": "playlist",  # 👈 Adicionado
             "google_ad_client": GOOGLE_AD_CLIENT,
             "DATA_AD_SLOT": DATA_AD_SLOT
         })
@@ -67,6 +68,7 @@ async def search_song(request: Request, youtube_url: str = Form(...)):
     return templates.TemplateResponse("index.html", {
         "request": request,
         "music": result,
+        "type": "track",  # 👈 Adicionado
         "google_ad_client": GOOGLE_AD_CLIENT,
         "DATA_AD_SLOT": DATA_AD_SLOT
     })

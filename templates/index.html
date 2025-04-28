@@ -28,12 +28,11 @@
 
       {% if error %}
       <p class="error">{{ error }}</p>
-      {% endif %} {% if music %} {% if music is iterable %}
+      {% endif %} {% if music %} {% if type == "playlist" %}
       <!-- Playlist Results -->
       <h2>Playlist</h2>
       {% for track in music %}
       <div class="result">
-        <img src="{{ track.image }}" alt="Capa" class="album-art" />
         <h3>{{ track.name }}</h3>
         <p>{{ track.artist }}</p>
         <div class="actions">
@@ -48,7 +47,7 @@
           </button>
         </div>
       </div>
-      {% endfor %} {% else %}
+      {% endfor %} {% elif type == "track" %}
       <!-- Single Track Result -->
       <div class="result">
         <img src="{{ music.image }}" alt="Capa" class="album-art" />
