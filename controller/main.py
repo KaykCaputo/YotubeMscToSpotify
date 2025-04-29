@@ -82,7 +82,12 @@ def search_track(token: str, youtube_url: str):
 
     song_name = title_and_artist.get("song_name")
     artist_name = title_and_artist.get("artist_name")
-    artist_name = search_for_artist(token, artist_name).get("name", artist_name)
+
+    artist_search = search_for_artist(token, artist_name)
+    artist_name = artist_search.get("name", artist_name)
+
+    if artist_name in song_name:
+        song_name = song_name.replace(artist_name, "").strip()
 
     headers = {"Authorization": f"Bearer {token}"}
 
@@ -144,13 +149,13 @@ def get_youtube_title_and_artist(youtube_url: str, api_key) -> dict:
 
     unwanted = ["official video", "remix", "audio", "hd", "music video", "official",
                 "1080p", "performance", "in concert", "full", "lyrics", "video", "clipe",
-                "oficial", "[", "]", "(", ")", "'", "|", ":", original_channel, channel, ","]
+                "oficial", "[", "]", "(", ")", "'", "|", ":", original_channel, channel, ",", 
+                "4k upgrade", "4k"]
     for w in unwanted:
         song_name = re.sub(rf"(?i)\b{re.escape(w)}\b", "", song_name)
 
     song_name = re.sub(r"[-_]", " ", song_name)
     song_name = re.sub(r"\s{2,}", " ", song_name).strip()
-
     logging.info(f"Extracted song: '{song_name}' by '{original_channel}'")
     return {"artist_name": original_channel, "song_name": song_name}
 

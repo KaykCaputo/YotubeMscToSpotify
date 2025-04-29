@@ -1,8 +1,16 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
     <title>Youtube Music to Spotify</title>
     <link rel="icon" type="image/x-icon" href="/static/favicon.ico" />
     <link rel="stylesheet" href="/static/style.css" />
@@ -13,25 +21,27 @@
     ></script>
   </head>
   <body>
-    <div class="container">
-      <h1>Youtube Music to Spotify</h1>
-      <form action="/search_song/" method="post">
+    <main class="container">
+       <h1>Youtube Music to Spotify</h1>
+      <form action="/search_song/" method="post" aria-labelledby="search-form">
         <input
           type="text"
           name="youtube_url"
           class="input-field"
-          placeholder="Youtube Music link"
+          placeholder="Paste your Youtube Music link here"
           required
+          aria-label="Youtube Music link"
         />
-        <button type="submit" class="btn">Search</button>
+        <button type="submit" class="btn" aria-label="Search">Search</button>
       </form>
 
       {% if error %}
       <p class="error">{{ error }}</p>
       {% endif %} {% if music %} {% if type == "playlist" %}
-      <!-- Playlist Results -->
-      <h2>Playlist</h2>
-      {% for track in music %}
+      <h2>Playlist Found:</h2>
+      {% if music[0].image %}
+      <img src="{{ music[0].image }}" alt="Playlist Cover" class="album-art" />
+      {% endif %} {% for track in music %}
       <div class="result">
         <h3>{{ track.name }}</h3>
         <p>{{ track.artist }}</p>
@@ -48,10 +58,10 @@
         </div>
       </div>
       {% endfor %} {% elif type == "track" %}
-      <!-- Single Track Result -->
+      <h2>Track Found:</h2>
       <div class="result">
-        <img src="{{ music.image }}" alt="Capa" class="album-art" />
-        <h2>{{ music.name }}</h2>
+        <img src="{{ music.image }}" alt="Album Cover" class="album-art" />
+        <h3>{{ music.name }}</h3>
         <p>{{ music.artist }}</p>
         <div class="actions">
           <a href="{{ music.spotify_url }}" target="_blank" class="btn"
@@ -66,56 +76,35 @@
         </div>
       </div>
       {% endif %} {% endif %}
-    </div>
+    </main>
 
-    <div class="sidebar">
-      <div class="ad">
-        <script
-          async
-          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"
-        ></script>
-        <ins
-          class="adsbygoogle"
-          style="display: block"
-          data-ad-client="{{ google_ad_client }}"
-          data-ad-slot="{{ data_ad_slot }}"
-        ></ins>
-        <script>
-          (adsbygoogle = window.adsbygoogle || []).push({});
-        </script>
-      </div>
-    </div>
-
-    <script>
-      function copyToClipboard(text) {
-        navigator.clipboard.writeText(text).then(function () {
-          alert("Link copiado para a área de transferência!");
-        });
-      }
-    </script>
-
-    <footer
-      style="
-        text-align: center;
-        padding: 20px;
-        background-color: #f1f1f1;
-        margin-top: 50px;
-      "
-    >
+    <footer>
       <p>
         Made by
         <a
           href="https://github.com/KaykCaputo"
           target="_blank"
-          style="color: #333"
+          style="font-weight: bold"
           >Kayk Caputo</a
         >
       </p>
     </footer>
-    <script
-      async
-      src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5911779233936060"
-      crossorigin="anonymous"
-    ></script>
+
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const resultElement = document.querySelector('.result');
+            if (resultElement) {
+                resultElement.classList.add('show');
+            }
+        });
+
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(function () {
+                alert("Link copied to clipboard!");
+            });
+        }
+    </script>
   </body>
 </html>
