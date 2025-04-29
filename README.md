@@ -38,6 +38,8 @@ Perfect for sharing music across platforms — fast, simple, and stylish.
   </tr>
 </table>
 
+---
+
 ## 🛠️ How to Use
 
 1. Open the app ➡️ [yotubemsctospotify.onrender.com](https://yotubemsctospotify.onrender.com)
