@@ -53,11 +53,7 @@ Perfect for sharing music across platforms — fast, simple, and stylish.
 
 ## 💡 Why Use This?
 
-Sharing music across platforms can be a pain. This tool removes that friction — no logins, no complexity. Just paste and go. Ideal for:
-
-- Music curators
-- Content creators
-- Friends sharing tracks across platforms
+Sharing music across platforms can be a pain. This tool removes that friction — no logins, no complexity. Just paste and go. Ideal for friends sharing tracks across platforms
 
 ---
 
