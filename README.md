@@ -14,7 +14,7 @@ This project provides a simple web interface that converts YouTube Music links i
 ## Features
 
 - **Automatic title extraction** from a YouTube Music link
-- **Now compatible with playlistws**
+- **Now compatible with playlists**
 - **Link conversion** to the standard YouTube format
 - **Spotify API integration** to find the matching track
 - **Modern, responsive interface**
