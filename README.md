@@ -13,10 +13,11 @@ This project provides a simple web interface that converts YouTube Music links i
 
 ## Features
 
-- **Automatic title extraction** from a YouTube Music link  
-- **Link conversion** to the standard YouTube format  
-- **Spotify API integration** to find the matching track  
-- **Modern, responsive interface**  
+- **Automatic title extraction** from a YouTube Music link
+- **Now compatible with playlistws**
+- **Link conversion** to the standard YouTube format
+- **Spotify API integration** to find the matching track
+- **Modern, responsive interface**
 
 ---
 
@@ -29,11 +30,9 @@ Check it out here:
 
 ## Usage
 
-1. Visit the public URL above.  
-2. Paste your **YouTube Music link** into the text box.  
-3. Click **Search**.  
+1. Visit the public URL above.
+2. Paste your **YouTube Music link** into the text box.
+3. Click **Search**.
 4. View the result and use the buttons to open in Spotify or copy the link.
 
 ---
-
-
