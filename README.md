@@ -29,15 +29,13 @@ Perfect for sharing music across platforms — fast, simple, and stylish.
 
 ## 📸 Preview
 
-> Paste. Click. Play. 🎶
-
 <table>
   <tr>
     <td><img src="./screenshots/ytpsptf1.png" alt="Screenshot 1" width="100%"/></td>
     <td><img src="./screenshots/ytpsptf2.png"" alt="Screenshot 2" width="100%"/></td>
   </tr>
 </table>
-
+> Paste. Click. Play. 🎶
 ---
 
 ## 🛠️ How to Use
