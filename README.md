@@ -35,7 +35,9 @@ Perfect for sharing music across platforms — fast, simple, and stylish.
     <td><img src="./screenshots/ytpsptf2.png"" alt="Screenshot 2" width="100%"/></td>
   </tr>
 </table>
-> Paste. Click. Play. 🎶
+
+> Paste. Click. Play. 🎶  
+
 ---
 
 ## 🛠️ How to Use
